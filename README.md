@@ -97,6 +97,6 @@ explicitly for anything beyond read-only work.
 
 ```bash
 bundle install
-bundle exec rake test     # offline: the CLI is replaced by a fake runner
-bundle exec rubocop
+asgard test_verbose       # offline: the CLI is replaced by a fake runner
+asgard quality            # tests, rubocop, flog, flay, reek, ...
 ```

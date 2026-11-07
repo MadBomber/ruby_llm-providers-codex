@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+# ruby_llm-providers-codex — RubyLLM provider driving the OpenAI Codex agent via codex exec
+
+import_up "repo_dev.loki"
+
+class Tasks
+  @@gem_name ||= "ruby_llm-providers-codex".freeze
+
+  header "ruby_llm-providers-codex v#{gem_version} — RubyLLM provider driving the OpenAI Codex agent via codex exec"
+end

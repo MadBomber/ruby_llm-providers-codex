@@ -6,3 +6,7 @@
 /pkg/
 /spec/reports/
 /tmp/
+
+# asgard quality-gate reports
+*_output.txt
+.quality/

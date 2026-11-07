@@ -9,6 +9,7 @@ module RubyLLM
       # caller's thread as it arrives. The process group is killed when the
       # timeout passes.
       class Runner
+        # What the process produced: full stdout, full stderr, and its exit status.
         Result = Data.define(:stdout, :stderr, :status)
         GRACE_SECONDS = 2
         EOF = Object.new.freeze
@@ -20,20 +21,9 @@ module RubyLLM
         # @param env [Hash] extra environment variables
         # @yield [String] each line of stdout
         # @return [Result]
-        def run(argv, stdin: '', cwd: nil, timeout: nil, env: {})
-          lines = []
+        def run(argv, stdin: '', cwd: nil, timeout: nil, env: {}, &block)
           Open3.popen3(env.to_h, *argv, chdir: cwd || Dir.pwd, pgroup: true) do |input, output, error, wait|
-            feeder = Thread.new { feed(input, stdin) }
-            errors = Thread.new { error.read }
-            queue  = Queue.new
-            reader = Thread.new { pump(output, queue) }
-            deadline = timeout && (now + timeout)
-            drain(queue, deadline) do |line|
-              lines << line
-              yield line if block_given?
-            end
-            [feeder, reader].each(&:join)
-            Result.new(stdout: lines.join, stderr: errors.value.to_s, status: wait.value)
+            collect(input, output, error, wait, stdin:, timeout:, &block)
           rescue TimeoutError
             terminate(wait)
             raise TimeoutError, "#{argv.first} did not finish within #{timeout}s"
@@ -43,6 +33,27 @@ module RubyLLM
         end
 
         private
+
+        # Drives one spawned process: feeds stdin and reads stderr on their own
+        # threads, pumps stdout through a queue so each line can be yielded
+        # before the process exits, and assembles the Result once it does.
+        def collect(input, output, error, wait, stdin:, timeout:)
+          feeder = Thread.new { feed(input, stdin) }
+          errors = Thread.new { error.read }
+          queue  = Queue.new
+          reader = Thread.new { pump(output, queue) }
+          lines  = []
+          drain(queue, deadline(timeout)) do |line|
+            lines << line
+            yield line if block_given?
+          end
+          [feeder, reader].each(&:join)
+          Result.new(stdout: lines.join, stderr: errors.value.to_s, status: wait.value)
+        end
+
+        def deadline(timeout)
+          timeout && (now + timeout)
+        end
 
         def feed(input, text)
           input.binmode
@@ -72,10 +83,11 @@ module RubyLLM
         end
 
         def terminate(wait)
-          Process.kill('TERM', -wait.pid)
+          pgid = -wait.pid
+          Process.kill('TERM', pgid)
           return if wait.join(GRACE_SECONDS)
 
-          Process.kill('KILL', -wait.pid)
+          Process.kill('KILL', pgid)
           wait.join
         rescue Errno::ESRCH, Errno::ECHILD
           nil
