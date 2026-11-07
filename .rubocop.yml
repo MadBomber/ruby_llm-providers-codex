@@ -1,0 +1,50 @@
+plugins:
+  - rubocop-minitest
+  - rubocop-rake
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.2
+  SuggestExtensions: false
+  Exclude:
+    - vendor/**/*
+    - pkg/**/*
+    - tmp/**/*
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+Style/Documentation:
+  Enabled: false
+Layout/LineLength:
+  Max: 120
+Layout/ExtraSpacing:
+  AllowForAlignment: true
+Layout/HashAlignment:
+  Enabled: false
+Metrics/AbcSize:
+  Max: 40
+Metrics/MethodLength:
+  Max: 30
+  CountAsOne:
+    - array
+    - hash
+    - heredoc
+Metrics/ParameterLists:
+  Max: 10
+  MaxOptionalParameters: 10
+Metrics/BlockLength:
+  Exclude:
+    - test/**/*.rb
+Metrics/ClassLength:
+  Max: 200
+Minitest/MultipleAssertions:
+  Enabled: false
+Minitest/EmptyLineBeforeAssertionMethods:
+  Enabled: false
+Style/StringConcatenation:
+  Exclude:
+    - test/**/*.rb
+Metrics/CyclomaticComplexity:
+  Max: 15
+Metrics/PerceivedComplexity:
+  Max: 15

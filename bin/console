@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require 'ruby_llm/providers/codex'
+
+# chat = RubyLLM.chat(model: 'sonnet', provider: :codex)
+# chat.ask('What is in this directory?') { |chunk| print chunk.content }
+
+require 'irb'
+IRB.start(__FILE__)
